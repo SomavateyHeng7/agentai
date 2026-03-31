@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at 10% 10%, #f0eee8, #f7f7f5 45%, #eef4f2 100%);
+}

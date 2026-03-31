@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    container_name: agentflow-app
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://agentflow:password@postgres:5432/agentflow
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=agentflow
+      - DB_USER=agentflow
+      - DB_PASSWORD=password
+      - USE_MOCK_INTEGRATIONS=true
+    depends_on:
+      - postgres
+      - prometheus
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: agentflow-postgres
+    environment:
+      - POSTGRES_DB=agentflow
+      - POSTGRES_USER=agentflow
+      - POSTGRES_PASSWORD=password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: agentflow-prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: agentflow-grafana
+    ports:
+      - '3001:3000'
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:

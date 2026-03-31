@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+ui/web/node_modules/
+ui/web/dashboard/node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Next.js
+ui/web/.next/
+ui/web/out/
+
+# Vite dashboard
+ui/web/dashboard/dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local deployment/tooling artifacts
+.vercel/
+.turbo/
+
+# Local runtime artifacts
+tmp/
+temp/
+*.pid

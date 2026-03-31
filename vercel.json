@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/agents/**": {
+      "maxDuration": 60,
+      "runtime": "nodejs22.x"
+    },
+    "api/workflows.ts": {
+      "maxDuration": 60,
+      "runtime": "nodejs22.x"
+    },
+    "api/ab-tests.ts": {
+      "maxDuration": 60,
+      "runtime": "nodejs22.x"
+    },
+    "api/ui/**": {
+      "maxDuration": 60,
+      "runtime": "edge"
+    }
+  }
+}

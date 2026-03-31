@@ -1,0 +1,20 @@
+{
+  "agentType": "sales-qualify",
+  "variantA": "v1",
+  "variantB": "v2",
+  "samples": [
+    {
+      "email": "cto@acme.com",
+      "company": "Acme Corp",
+      "message": "Need pricing and implementation plan for a 200-person support team.",
+      "source": "website"
+    },
+    {
+      "email": "founder@beta.io",
+      "company": "Beta Labs",
+      "message": "Looking for a product demo and enterprise rollout timeline.",
+      "source": "referral"
+    }
+  ],
+  "runsPerSample": 2
+}

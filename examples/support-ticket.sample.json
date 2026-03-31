@@ -1,0 +1,6 @@
+{
+  "id": "TICKET-1001",
+  "subject": "Cannot log in after update",
+  "message": "Our admin users cannot access the dashboard after the latest deployment.",
+  "customerEmail": "ops@acme.com"
+}
