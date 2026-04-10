@@ -1,5 +1,5 @@
 import { createLogger, format, transports } from 'winston';
-import { ApiResponse } from '../types';
+import { ApiResponse } from '../../types';
 
 const logger = createLogger({
   level: 'info',

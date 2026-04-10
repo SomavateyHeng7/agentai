@@ -1,4 +1,4 @@
-import { scheduleSalesMeetingTool } from '../../mastra/tools/schedule-sales-meeting.tool';
+import { scheduleSalesMeetingTool } from '../../../tools/schedule-sales-meeting.tool';
 import { WorkflowActionContext } from '../types';
 import { withRetry } from './retry';
 

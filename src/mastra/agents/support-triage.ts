@@ -1,5 +1,5 @@
 import { createLogger, format, transports } from 'winston';
-import { ApiResponse, SupportTicketSchema, SupportTriageResult } from '../types';
+import { ApiResponse, SupportTicketSchema, SupportTriageResult } from '../../types';
 import { BaseAgent } from './base-agent';
 
 const logger = createLogger({
@@ -9,7 +9,6 @@ const logger = createLogger({
 });
 
 export class SupportTriage extends BaseAgent {
-
   async triage(input: unknown): Promise<ApiResponse<SupportTriageResult>> {
     return this.executeValidated({
       input,
@@ -24,7 +23,5 @@ export class SupportTriage extends BaseAgent {
     });
   }
 }
-
-// ─── Singleton Export ─────────────────────────────────────────────────────────
 
 export const supportTriage = new SupportTriage();

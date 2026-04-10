@@ -1,5 +1,5 @@
 import { createLogger, format, transports } from 'winston';
-import { ApiResponse, SalesLeadSchema, SalesQualificationResult } from '../types';
+import { ApiResponse, SalesLeadSchema, SalesQualificationResult } from '../../types';
 import { BaseAgent } from './base-agent';
 
 const logger = createLogger({
@@ -9,7 +9,6 @@ const logger = createLogger({
 });
 
 export class SalesQualifier extends BaseAgent {
-
   async qualify(input: unknown): Promise<ApiResponse<SalesQualificationResult>> {
     return this.executeValidated({
       input,
@@ -24,7 +23,5 @@ export class SalesQualifier extends BaseAgent {
     });
   }
 }
-
-// ─── Singleton Export ─────────────────────────────────────────────────────────
 
 export const salesQualifier = new SalesQualifier();

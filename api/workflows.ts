@@ -4,7 +4,7 @@ import {
   getWorkflowExecutions,
   getWorkflowPathMetrics,
   startSmartLeadWorkflow,
-} from '../src/workflows/orchestrator';
+} from '../src/mastra/workflows/smart-lead-runtime';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

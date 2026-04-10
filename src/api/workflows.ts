@@ -5,7 +5,7 @@ import {
   getWorkflowPathMetrics,
   startSmartLeadWorkflow,
   subscribeWorkflowExecution,
-} from '../workflows/orchestrator';
+} from '../mastra/workflows/smart-lead-runtime';
 
 export const workflowsRouter = Router();
 

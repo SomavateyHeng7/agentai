@@ -1,5 +1,5 @@
 import { createLogger, format, transports } from 'winston';
-import { ApiResponse, ContentRequestSchema, ContentResult } from '../types';
+import { ApiResponse, ContentRequestSchema, ContentResult } from '../../types';
 import { BaseAgent } from './base-agent';
 
 const logger = createLogger({
@@ -9,7 +9,6 @@ const logger = createLogger({
 });
 
 export class ContentGenerator extends BaseAgent {
-
   async generate(input: unknown): Promise<ApiResponse<ContentResult>> {
     return this.executeValidated({
       input,

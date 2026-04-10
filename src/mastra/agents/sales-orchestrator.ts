@@ -1,8 +1,8 @@
 import { createLogger, format, transports } from 'winston';
-import { ApiResponse, SalesLeadSchema, SalesQualificationResult } from '../types';
-import { mastra, initializeMastra } from '../mastra';
-import { AGENT_VERSION } from '../mastra/constants';
-import { createTraceId } from '../mastra/observability';
+import { ApiResponse, SalesLeadSchema, SalesQualificationResult } from '../../types';
+import { AGENT_VERSION } from '../constants';
+import { createTraceId } from '../observability';
+import { mastra, initializeMastra } from '../index';
 
 const logger = createLogger({
   level: 'info',

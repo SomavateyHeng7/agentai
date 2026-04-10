@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
-import { SalesLeadSchema } from '../types';
-import { executeSmartLeadWorkflow } from './definitions/smart-lead';
-import { WorkflowExecution, WorkflowRuntime } from './types';
+import { SalesLeadSchema } from '../../types';
+import { executeSmartLeadWorkflow } from './smart-lead/definition';
+import { WorkflowExecution, WorkflowRuntime } from './smart-lead/types';
 
 const runtime: WorkflowRuntime = {
   executions: new Map<string, WorkflowExecution>(),

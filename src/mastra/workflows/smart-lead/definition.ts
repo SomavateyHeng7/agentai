@@ -1,11 +1,11 @@
 import { randomUUID } from 'crypto';
-import { SalesLead, SalesQualificationResult } from '../../types';
-import { salesQualifier } from '../../agents/sales-qualifier';
-import { createSalesforceLeadTool } from '../../mastra/tools/create-salesforce-lead.tool';
-import { sendEmailAction } from '../actions/email';
-import { sendSlackAction } from '../actions/slack';
-import { scheduleCalendarAction } from '../actions/calendar';
-import { WorkflowExecution, WorkflowRuntime } from '../types';
+import { SalesLead, SalesQualificationResult } from '../../../types';
+import { salesQualifier } from '../../agents';
+import { createSalesforceLeadTool } from '../../tools/create-salesforce-lead.tool';
+import { scheduleCalendarAction } from './actions/calendar';
+import { sendEmailAction } from './actions/email';
+import { sendSlackAction } from './actions/slack';
+import { WorkflowExecution, WorkflowRuntime } from './types';
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -120,89 +120,113 @@ export const executeSmartLeadWorkflow = async (
     const isWarm = qualifiedLead.score >= 60 && qualifiedLead.score <= 79;
     const isCold = qualifiedLead.score >= 40 && qualifiedLead.score <= 59;
 
-    await runStep(execution, runtime, 'create-salesforce-lead', async () => {
-      const response = await createSalesforceLeadTool.execute(
-        {
-          traceId,
-          lead,
-          qualification: qualifiedLead,
-        },
-        { traceId }
-      );
-
-      execution.result = {
-        ...qualifiedLead,
-        salesforceData: {
-          leadId: response.leadId,
-          opportunityId: response.opportunityId,
-          status: response.status,
-        },
-      };
-
-      return response;
-    }, !isHot && !isWarm);
-
-    await runStep(execution, runtime, 'hot-path-parallel-actions', async () => {
-      if (!isHot) {
-        return;
-      }
-
-      const [meeting] = await Promise.all([
-        scheduleCalendarAction(actionContext),
-        sendSlackAction(
+    await runStep(
+      execution,
+      runtime,
+      'create-salesforce-lead',
+      async () => {
+        const response = await createSalesforceLeadTool.execute(
           {
-            channel: '#sales-alerts',
-            message: `HOT lead: ${lead.company} (${lead.email}) score ${qualifiedLead.score}`,
+            traceId,
+            lead,
+            qualification: qualifiedLead,
+          },
+          { traceId }
+        );
+
+        execution.result = {
+          ...qualifiedLead,
+          salesforceData: {
+            leadId: response.leadId,
+            opportunityId: response.opportunityId,
+            status: response.status,
+          },
+        };
+
+        return response;
+      },
+      !isHot && !isWarm
+    );
+
+    await runStep(
+      execution,
+      runtime,
+      'hot-path-parallel-actions',
+      async () => {
+        if (!isHot) {
+          return;
+        }
+
+        const [meeting] = await Promise.all([
+          scheduleCalendarAction(actionContext),
+          sendSlackAction(
+            {
+              channel: '#sales-alerts',
+              message: `HOT lead: ${lead.company} (${lead.email}) score ${qualifiedLead.score}`,
+            },
+            actionContext
+          ),
+          sendEmailAction(
+            {
+              to: 'sales@agentflow.local',
+              subject: `HOT lead for ${lead.company}`,
+              body: qualifiedLead.nextAction,
+            },
+            actionContext
+          ),
+        ]);
+
+        execution.path.push('branch:hot');
+        execution.result = {
+          ...qualifiedLead,
+          meetingData: {
+            meetingId: meeting.meetingId,
+            status: meeting.status,
+            scheduledAt: meeting.scheduledAt,
+            meetingUrl: meeting.meetingUrl,
+          },
+        };
+
+        return { meetingId: meeting.meetingId };
+      },
+      !isHot
+    );
+
+    await runStep(
+      execution,
+      runtime,
+      'warm-path-nurture',
+      async () => {
+        execution.path.push('branch:warm');
+        await sendEmailAction(
+          {
+            to: lead.email,
+            subject: `Thanks for your interest, ${lead.company}`,
+            body: 'We added you to our nurture sequence and will follow up with tailored resources.',
           },
           actionContext
-        ),
-        sendEmailAction(
+        );
+      },
+      !isWarm
+    );
+
+    await runStep(
+      execution,
+      runtime,
+      'cold-path-newsletter',
+      async () => {
+        execution.path.push('branch:cold');
+        await sendEmailAction(
           {
-            to: 'sales@agentflow.local',
-            subject: `HOT lead for ${lead.company}`,
-            body: qualifiedLead.nextAction,
+            to: lead.email,
+            subject: 'Welcome to AgentFlow insights',
+            body: 'You have been subscribed to our newsletter for product updates and best practices.',
           },
           actionContext
-        ),
-      ]);
-
-      execution.path.push('branch:hot');
-      execution.result = {
-        ...qualifiedLead,
-        meetingData: {
-          meetingId: meeting.meetingId,
-          status: meeting.status,
-          scheduledAt: meeting.scheduledAt,
-          meetingUrl: meeting.meetingUrl,
-        },
-      };
-
-      return { meetingId: meeting.meetingId };
-    }, !isHot);
-
-    await runStep(execution, runtime, 'warm-path-nurture', async () => {
-      execution.path.push('branch:warm');
-      await sendEmailAction(
-        {
-          to: lead.email,
-          subject: `Thanks for your interest, ${lead.company}`,
-          body: 'We added you to our nurture sequence and will follow up with tailored resources.',
-        },
-        actionContext
-      );
-    }, !isWarm);
-
-    await runStep(execution, runtime, 'cold-path-newsletter', async () => {
-      execution.path.push('branch:cold');
-      await sendEmailAction(
-        {
-          to: lead.email,
-          subject: 'Welcome to AgentFlow insights',
-          body: 'You have been subscribed to our newsletter for product updates and best practices.',
-        },
-        actionContext
-      );
-    }, !isCold);
+        );
+      },
+      !isCold
+    );
 
     execution.status = 'completed';
     execution.completedAt = nowIso();

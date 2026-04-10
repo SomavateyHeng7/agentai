@@ -17,19 +17,19 @@ export const isWorkflowName = (value: string): value is WorkflowName =>
 export const runWorkflow = async (workflow: WorkflowName, payload: unknown): Promise<unknown> => {
   switch (workflow) {
     case 'sales-orchestrate': {
-      const { salesOrchestrator } = await import('../agents/sales-orchestrator');
+      const { salesOrchestrator } = await import('../mastra/agents/sales-orchestrator');
       return salesOrchestrator.orchestrate(payload);
     }
     case 'sales-qualify': {
-      const { salesQualifier } = await import('../agents/sales-qualifier');
+      const { salesQualifier } = await import('../mastra/agents/sales-qualifier');
       return salesQualifier.qualify(payload);
     }
     case 'support-triage': {
-      const { supportTriage } = await import('../agents/support-triage');
+      const { supportTriage } = await import('../mastra/agents/support-triage');
       return supportTriage.triage(payload);
     }
     case 'content-generate': {
-      const { contentGenerator } = await import('../agents/content-generator');
+      const { contentGenerator } = await import('../mastra/agents/content-generator');
       return contentGenerator.generate(payload);
     }
     default:

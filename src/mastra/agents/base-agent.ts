@@ -1,9 +1,9 @@
 import { Logger } from 'winston';
 import { z } from 'zod';
-import { mastra, initializeMastra } from '../mastra';
-import { AGENT_VERSION } from '../mastra/constants';
-import { createTraceId } from '../mastra/observability';
-import { ApiResponse } from '../types';
+import { AGENT_VERSION } from '../constants';
+import { createTraceId } from '../observability';
+import { mastra, initializeMastra } from '../index';
+import { ApiResponse } from '../../types';
 
 interface ExecuteConfig<TParsed extends Record<string, unknown>> {
   input: unknown;

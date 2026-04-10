@@ -48,11 +48,11 @@ curl -s -X POST http://localhost:3000/api/agents/sales/qualify \
 
 ## Project Structure
 
-- `src/agents`: API-facing agent entrypoints.
+- `src/mastra/agents`: Canonical API-facing agent entrypoints.
 - `src/mastra/workflows`: Workflow definitions, including orchestration.
+- `src/mastra/workflows/smart-lead`: Smart lead runtime, step definition, and workflow actions.
 - `src/mastra/tools`: Tool layer with Zod-validated contracts.
 - `src/cli`: Command-line runner for workflows and experiments.
-- `src/workflows`: Orchestrator, smart-lead workflow, reusable actions.
 - `src/testing`: A/B testing orchestrator and statistical metrics collector.
 - `src/api`: API routers for workflows and A/B tests.
 - `src/integrations`: Salesforce, Zendesk, meetings, and data adapters.

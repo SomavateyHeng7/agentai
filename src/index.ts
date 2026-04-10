@@ -1,10 +1,12 @@
 import 'dotenv/config';
 import express, { NextFunction, Request, Response } from 'express';
 import { WebSocketServer } from 'ws';
-import { salesQualifier } from './agents/sales-qualifier';
-import { salesOrchestrator } from './agents/sales-orchestrator';
-import { supportTriage } from './agents/support-triage';
-import { contentGenerator } from './agents/content-generator';
+import {
+  contentGenerator,
+  salesOrchestrator,
+  salesQualifier,
+  supportTriage,
+} from './mastra/agents';
 import { getAggregatedStats, getDashboardStats, getMetrics, runMigrations } from './integrations/database';
 import { metricsHandler, metricsMiddleware } from './observability/metrics';
 import { HealthStatus } from './types';

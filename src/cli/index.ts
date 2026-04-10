@@ -163,7 +163,7 @@ program
       const testTemplate = await readTemplate('test.template.ts.tpl');
       const promptTemplate = await readTemplate('prompt.template.md.tpl');
 
-      const agentPath = path.join(projectRoot, 'src', 'agents', `${name}.ts`);
+      const agentPath = path.join(projectRoot, 'src', 'mastra', 'agents', `${name}.ts`);
       const testPath = path.join(projectRoot, 'tests', `${name}.test.ts`);
       const promptDir = path.join(projectRoot, 'src', 'prompts', 'versions', name);
       const promptPath = path.join(promptDir, 'v1.md');

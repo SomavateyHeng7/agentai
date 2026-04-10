@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { SalesLead, SalesQualificationResult } from '../types';
+import { SalesLead, SalesQualificationResult } from '../../../types';
 
 export type WorkflowStatus = 'running' | 'completed' | 'failed';
 
@@ -41,9 +41,4 @@ export interface WorkflowActionContext {
   executionId: string;
   lead: SalesLead;
   qualification: SalesQualificationResult;
-}
-
-export interface WorkflowDefinition<TInput, TOutput> {
-  name: string;
-  run: (input: TInput, runtime: WorkflowRuntime) => Promise<TOutput>;
 }
