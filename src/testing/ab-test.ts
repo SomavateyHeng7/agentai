@@ -102,7 +102,7 @@ export const startABTest = async (configInput: unknown): Promise<{
         const sample = config.samples[i];
 
         const aStart = Date.now();
-        const aOutput = await runWorkflow(config.agentType, sample);
+        const aOutput = await runWorkflow(config.agentType, sample, config.variantA);
         const aEval = toExecutionMetrics(aOutput);
         aMetrics.push(aEval);
         abExecutions.push({
@@ -119,7 +119,7 @@ export const startABTest = async (configInput: unknown): Promise<{
         });
 
         const bStart = Date.now();
-        const bOutput = await runWorkflow(config.agentType, sample);
+        const bOutput = await runWorkflow(config.agentType, sample, config.variantB);
         const bEval = toExecutionMetrics(bOutput);
         bMetrics.push(bEval);
         abExecutions.push({

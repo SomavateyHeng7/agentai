@@ -12,6 +12,7 @@ interface ExecuteConfig<TParsed extends Record<string, unknown>> {
   logger: Logger;
   logLabel: string;
   metadata: (parsed: TParsed) => Record<string, unknown>;
+  promptVersion?: string;
 }
 
 export abstract class BaseAgent {
@@ -59,7 +60,7 @@ export abstract class BaseAgent {
         ...parsed.data,
         traceId,
       },
-      { traceId }
+      { traceId, promptVersion: config.promptVersion }
     );
   }
 }

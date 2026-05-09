@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export interface ToolContext {
   traceId: string;
+  promptVersion?: string;
 }
 
 export interface ToolDefinition<TInput, TOutput> {

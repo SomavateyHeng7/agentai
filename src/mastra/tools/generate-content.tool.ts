@@ -15,8 +15,6 @@ export interface ContentGenerationOutput {
   retryCount: number;
 }
 
-const promptReference = loadPromptReference('content-generator');
-
 export const generateContentTool: ToolDefinition<ContentGenerationInput, ContentGenerationOutput> = {
   name: 'generateContent',
   description: 'Generates structured marketing content based on type, topic, tone, and audience.',
@@ -29,11 +27,13 @@ export const generateContentTool: ToolDefinition<ContentGenerationInput, Content
     });
 
     try {
+      const version = context.promptVersion ?? 'v1';
+      const promptReference = loadPromptReference('content-generator', version);
       const { system, user } = contentGenerationPrompt(input);
       const { result, tokensUsed, retryCount } = await runPromptedClaudeTool({
         system,
         user,
-        promptVersion: 'content-generator/v1',
+        promptVersion: `content-generator/${version}`,
         promptReference,
         schema: ContentResultSchema,
         maxTokens: 1500,

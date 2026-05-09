@@ -15,8 +15,6 @@ export interface SalesLeadQualificationOutput {
   retryCount: number;
 }
 
-const promptReference = loadPromptReference('sales-qualifier');
-
 export const qualifySalesLeadTool: ToolDefinition<SalesLeadToolInput, SalesLeadQualificationOutput> = {
   name: 'qualifySalesLead',
   description: 'Qualifies a sales lead using BANT and intent signals and returns a structured score and recommended next action.',
@@ -29,11 +27,13 @@ export const qualifySalesLeadTool: ToolDefinition<SalesLeadToolInput, SalesLeadQ
     });
 
     try {
+      const version = context.promptVersion ?? 'v1';
+      const promptReference = loadPromptReference('sales-qualifier', version);
       const { system, user } = salesQualificationPrompt(input);
       const { result, tokensUsed, retryCount } = await runPromptedClaudeTool({
         system,
         user,
-        promptVersion: 'sales-qualifier/v1',
+        promptVersion: `sales-qualifier/${version}`,
         promptReference,
         schema: SalesQualificationResultSchema,
         maxTokens: 1024,

@@ -27,7 +27,7 @@ app.use('/api/settings', settingsRouter);
 
 app.get('/health', async (_req: Request, res: Response) => {
   const isMock = process.env.USE_MOCK_INTEGRATIONS !== 'false';
-  const anthropicAvailable = Boolean(process.env.ANTHROPIC_API_KEY) || isMock;
+  const openaiAvailable = Boolean(process.env.OPENAI_API_KEY) || isMock;
 
   const health: HealthStatus = {
     status: 'ok',
@@ -38,11 +38,11 @@ app.get('/health', async (_req: Request, res: Response) => {
       database: 'ok',
       salesforce: isMock ? 'mock' : 'ok',
       zendesk: isMock ? 'mock' : 'ok',
-      anthropic: anthropicAvailable ? 'ok' : 'error',
+      openai: openaiAvailable ? 'ok' : 'error',
     },
   };
 
-  if (health.services.anthropic === 'error') {
+  if (health.services.openai === 'error') {
     health.status = 'degraded';
   }
 

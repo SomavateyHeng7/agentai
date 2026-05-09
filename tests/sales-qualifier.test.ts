@@ -43,6 +43,7 @@ describe('sales qualification contracts', () => {
     const outputWithMeeting = {
       score: 88,
       tier: 'HOT',
+      confidence: 'HIGH',
       reasoning: 'Strong intent and budget signals.',
       nextAction: 'Schedule discovery call',
       meetingData: {

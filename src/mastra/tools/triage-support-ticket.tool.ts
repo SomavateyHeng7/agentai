@@ -15,8 +15,6 @@ export interface SupportTicketTriageOutput {
   retryCount: number;
 }
 
-const promptReference = loadPromptReference('support-triage');
-
 export const triageSupportTicketTool: ToolDefinition<SupportTicketToolInput, SupportTicketTriageOutput> = {
   name: 'triageSupportTicket',
   description: 'Classifies support ticket priority and team routing with optional auto-response.',
@@ -29,11 +27,13 @@ export const triageSupportTicketTool: ToolDefinition<SupportTicketToolInput, Sup
     });
 
     try {
+      const version = context.promptVersion ?? 'v1';
+      const promptReference = loadPromptReference('support-triage', version);
       const { system, user } = supportTriagePrompt(input);
       const { result, tokensUsed, retryCount } = await runPromptedClaudeTool({
         system,
         user,
-        promptVersion: 'support-triage/v1',
+        promptVersion: `support-triage/${version}`,
         promptReference,
         schema: SupportTriageResultSchema,
         maxTokens: 1024,

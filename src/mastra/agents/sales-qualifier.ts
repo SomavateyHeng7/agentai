@@ -9,7 +9,7 @@ const logger = createLogger({
 });
 
 export class SalesQualifier extends BaseAgent {
-  async qualify(input: unknown): Promise<ApiResponse<SalesQualificationResult>> {
+  async qualify(input: unknown, promptVersion?: string): Promise<ApiResponse<SalesQualificationResult>> {
     return this.executeValidated({
       input,
       schema: SalesLeadSchema,
@@ -20,6 +20,7 @@ export class SalesQualifier extends BaseAgent {
         company: parsed.company,
         source: parsed.source,
       }),
+      promptVersion,
     });
   }
 }

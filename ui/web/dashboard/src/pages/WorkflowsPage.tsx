@@ -54,7 +54,7 @@ export const WorkflowsPage = () => {
   }, [pathRows, totalRuns]);
 
   const startStream = (id: string) => {
-    const eventSource = new EventSource(`http://localhost:3000/api/workflows/stream/${id}`);
+    const eventSource = new EventSource(`/api/workflows/stream/${id}`);
     setExecutionId(id);
     setStreamEvents([]);
 

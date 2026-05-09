@@ -14,7 +14,7 @@ export const WORKFLOW_NAMES: WorkflowName[] = [
 export const isWorkflowName = (value: string): value is WorkflowName =>
   WORKFLOW_NAMES.includes(value as WorkflowName);
 
-export const runWorkflow = async (workflow: WorkflowName, payload: unknown): Promise<unknown> => {
+export const runWorkflow = async (workflow: WorkflowName, payload: unknown, promptVersion?: string): Promise<unknown> => {
   switch (workflow) {
     case 'sales-orchestrate': {
       const { salesOrchestrator } = await import('../mastra/agents/sales-orchestrator');
@@ -22,15 +22,15 @@ export const runWorkflow = async (workflow: WorkflowName, payload: unknown): Pro
     }
     case 'sales-qualify': {
       const { salesQualifier } = await import('../mastra/agents/sales-qualifier');
-      return salesQualifier.qualify(payload);
+      return salesQualifier.qualify(payload, promptVersion);
     }
     case 'support-triage': {
       const { supportTriage } = await import('../mastra/agents/support-triage');
-      return supportTriage.triage(payload);
+      return supportTriage.triage(payload, promptVersion);
     }
     case 'content-generate': {
       const { contentGenerator } = await import('../mastra/agents/content-generator');
-      return contentGenerator.generate(payload);
+      return contentGenerator.generate(payload, promptVersion);
     }
     default:
       throw new Error(`Unsupported workflow: ${workflow}`);

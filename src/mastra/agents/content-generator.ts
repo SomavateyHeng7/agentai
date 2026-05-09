@@ -9,7 +9,7 @@ const logger = createLogger({
 });
 
 export class ContentGenerator extends BaseAgent {
-  async generate(input: unknown): Promise<ApiResponse<ContentResult>> {
+  async generate(input: unknown, promptVersion?: string): Promise<ApiResponse<ContentResult>> {
     return this.executeValidated({
       input,
       schema: ContentRequestSchema,
@@ -20,6 +20,7 @@ export class ContentGenerator extends BaseAgent {
         type: parsed.type,
         topic: parsed.topic,
       }),
+      promptVersion,
     });
   }
 }

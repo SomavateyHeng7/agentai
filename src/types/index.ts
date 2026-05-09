@@ -15,29 +15,41 @@ export const SalesLeadSchema = z.object({
 
 export type SalesLead = z.infer<typeof SalesLeadSchema>;
 
-export const SalesQualificationResultSchema = z.object({
-  score: z.number().int().min(0).max(100),
-  tier: z.enum(['HOT', 'WARM', 'COLD', 'UNQUALIFIED']),
-  reasoning: z.string().min(1),
-  nextAction: z.string().min(1),
-  keyInsights: z.array(z.string()).optional(),
-  estimatedDealSize: z.string().optional(),
-  salesforceData: z
-    .object({
-      leadId: z.string().optional(),
-      opportunityId: z.string().optional(),
-      status: z.string().optional(),
-    })
-    .optional(),
-  meetingData: z
-    .object({
-      meetingId: z.string().optional(),
-      status: z.enum(['scheduled', 'pending']).optional(),
-      scheduledAt: z.string().optional(),
-      meetingUrl: z.string().optional(),
-    })
-    .optional(),
-});
+export const SalesQualificationResultSchema = z
+  .object({
+    score: z.number().int().min(0).max(100),
+    tier: z.enum(['HOT', 'WARM', 'COLD', 'UNQUALIFIED']),
+    confidence: z.enum(['HIGH', 'MEDIUM', 'LOW']),
+    reasoning: z.string().min(1),
+    nextAction: z.string().min(1),
+    keyInsights: z.array(z.string()).optional(),
+    estimatedDealSize: z.string().optional(),
+    salesforceData: z
+      .object({
+        leadId: z.string().optional(),
+        opportunityId: z.string().optional(),
+        status: z.string().optional(),
+      })
+      .optional(),
+    meetingData: z
+      .object({
+        meetingId: z.string().optional(),
+        status: z.enum(['scheduled', 'pending']).optional(),
+        scheduledAt: z.string().optional(),
+        meetingUrl: z.string().optional(),
+      })
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.tier === 'HOT') return data.score >= 80;
+      if (data.tier === 'WARM') return data.score >= 60 && data.score < 80;
+      if (data.tier === 'COLD') return data.score >= 40 && data.score < 60;
+      if (data.tier === 'UNQUALIFIED') return data.score < 40;
+      return true;
+    },
+    { message: 'tier must be consistent with score range (HOT=80-100, WARM=60-79, COLD=40-59, UNQUALIFIED=0-39)' }
+  );
 
 export type SalesQualificationResult = z.infer<typeof SalesQualificationResultSchema>;
 
@@ -162,6 +174,6 @@ export interface HealthStatus {
     database: 'ok' | 'error';
     salesforce: 'ok' | 'mock' | 'error';
     zendesk: 'ok' | 'mock' | 'error';
-    anthropic: 'ok' | 'error';
+    openai: 'ok' | 'error';
   };
 }

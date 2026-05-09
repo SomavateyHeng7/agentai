@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 interface SettingsState {
   apiKeys: {
-    anthropic: string;
+    openai: string;
   };
   integrations: {
     salesforceInstanceUrl: string;
@@ -23,7 +23,7 @@ interface SettingsState {
 
 const state: SettingsState = {
   apiKeys: {
-    anthropic: process.env.ANTHROPIC_API_KEY ? '***configured***' : 'not-configured',
+    openai: process.env.OPENAI_API_KEY ? '***configured***' : 'not-configured',
   },
   integrations: {
     salesforceInstanceUrl: process.env.SALESFORCE_INSTANCE_URL || 'https://mock.salesforce.com',

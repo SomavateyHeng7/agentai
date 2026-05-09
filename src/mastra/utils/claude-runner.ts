@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { z } from 'zod';
 
 const MAX_RETRIES = 3;
@@ -7,42 +7,43 @@ const RATE_LIMIT_DELAY_MS = 12000;
 
 // ─── Singleton client ─────────────────────────────────────────────────────────
 
-let _client: Anthropic | null = null;
+let _client: OpenAI | null = null;
 
-export const getAnthropicClient = (): Anthropic => {
+export const getOpenAIClient = (): OpenAI => {
   if (!_client) {
-    _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   }
   return _client;
 };
 
-export const getModel = (): string => process.env.CLAUDE_MODEL || 'claude-sonnet-4-6';
+export const getModel = (): string => process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 const shouldUseMockLlm = (): boolean => {
-  const noApiKey = !process.env.ANTHROPIC_API_KEY;
+  const noApiKey = !process.env.OPENAI_API_KEY;
   const mockNotDisabled = process.env.USE_MOCK_INTEGRATIONS !== 'false';
   return noApiKey && mockNotDisabled;
 };
 
-const asText = (content: Anthropic.MessageParam['content']): string => {
-  if (typeof content === 'string') return content;
-  return content
-    .map((part) => (part.type === 'text' ? part.text : ''))
-    .join(' ')
-    .trim();
-};
+// ─── Mock result builders ─────────────────────────────────────────────────────
 
 const buildMockSalesResult = (userText: string): unknown => {
   const lower = userText.toLowerCase();
-  const hasBudget = /\$|budget|approved|enterprise/.test(lower);
-  const hasUrgency = /urgent|asap|this quarter|timeline|immediately/.test(lower);
-  const score = hasBudget && hasUrgency ? 88 : hasBudget ? 76 : 62;
-  const tier = score >= 80 ? 'HOT' : score >= 70 ? 'WARM' : 'COLD';
+  // Detect budget — explicit negations must come first to avoid false positives
+  const hasBudgetNegation = /no budget|don't have budget|do not have budget|without budget|\$0 budget|zero budget/.test(lower);
+  const hasBudget = !hasBudgetNegation && /\$\d|\bbudget\b.*\b(approved|sorted|ready|confirmed)\b|\b(approved|sorted|confirmed)\b.*\bbudget\b|enterprise plan/.test(lower);
+  // Detect urgency — avoid matching "no urgency", "not urgent", etc.
+  const hasUrgencyNegation = /no urgency|not urgent|no rush|no timeline/.test(lower);
+  const hasUrgency = !hasUrgencyNegation && /urgent|asap|this quarter|this week|end of month|immediately/.test(lower);
+
+  const score = hasBudget && hasUrgency ? 88 : hasBudget ? 76 : hasUrgency ? 65 : 55;
+  const tier = score >= 80 ? 'HOT' : score >= 60 ? 'WARM' : score >= 40 ? 'COLD' : 'UNQUALIFIED';
+  const confidence = hasBudget && hasUrgency ? 'HIGH' : hasBudget || hasUrgency ? 'MEDIUM' : 'LOW';
 
   return {
     score,
     tier,
-    reasoning: 'Mock qualification result generated locally because Anthropic API key is not configured.',
+    confidence,
+    reasoning: `Budget: ${hasBudget ? 'confirmed' : 'missing'} — ${hasBudget ? 'budget signal detected' : 'no budget signal found'}. Authority: unclear — not evaluated in mock mode. Need: assumed present. Timeline: ${hasUrgency ? 'confirmed — urgency signal detected' : 'missing — no urgency signal found'}. Mock result generated locally (no OpenAI API key).`,
     nextAction:
       tier === 'HOT'
         ? 'Create Salesforce lead and auto-schedule discovery call.'
@@ -57,13 +58,22 @@ const buildMockSalesResult = (userText: string): unknown => {
 
 const buildMockSupportResult = (userText: string): unknown => {
   const lower = userText.toLowerCase();
-  const isCritical = /outage|down|cannot login|payment failure|production/.test(lower);
+  // Match outage / system-down signals — includes standalone "down" (e.g. "checkout's down")
+  const isCritical =
+    /outage|payment failure|production/.test(lower) ||
+    /\bdown\b/.test(lower);
+  // Login broken after password reset = system-level auth bug → HIGH
+  const isAuthBug =
+    /(cannot|can not|can't|unable to)\s+(log\s?in|login|sign\s?in)/.test(lower) ||
+    (/password/.test(lower) && /(reset|incorrect|wrong|not working|still)/.test(lower));
   const isBilling = /invoice|billing|charge|refund|payment/.test(lower);
 
+  const priority: string = isCritical ? 'CRITICAL' : isAuthBug || isBilling ? 'HIGH' : 'MEDIUM';
+
   return {
-    priority: isCritical ? 'CRITICAL' : 'HIGH',
+    priority,
     team: isBilling ? 'BILLING' : 'ENGINEERING',
-    summary: 'Mock triage result generated locally because Anthropic API key is not configured.',
+    summary: 'Mock triage result generated locally because OpenAI API key is not configured.',
     autoResponse: isBilling
       ? 'Thanks for contacting billing support. We are reviewing your request and will follow up shortly.'
       : 'Thanks for reporting this issue. Engineering has been notified and we are investigating now.',
@@ -74,7 +84,10 @@ const buildMockSupportResult = (userText: string): unknown => {
 };
 
 const buildMockContentResult = (userText: string): unknown => {
-  const topicMatch = userText.match(/topic[:\s]+([^\n]+)/i);
+  // Match "topic: X" or "about X" (up to punctuation/newline) — handles formal and casual phrasing
+  const topicMatch =
+    userText.match(/topic[:\s]+([^\n,]+)/i) ||
+    userText.match(/(?:post|write|blog|content)\s+(?:about|on)\s+([^,\n.!?]+)/i);
   const topic = topicMatch?.[1]?.trim() || 'Agentic workflows';
 
   return {
@@ -90,12 +103,11 @@ const buildMockContentResult = (userText: string): unknown => {
   };
 };
 
-const buildMockResult = (params: Anthropic.MessageCreateParamsNonStreaming): unknown => {
-  const system = params.system;
-  const systemText = Array.isArray(system) ? system.map((p) => (typeof p === 'string' ? p : p.text)).join('\n') : (system || '');
+const buildMockResult = (params: LLMParams): unknown => {
+  const systemText = params.system;
   const userText = params.messages
     .filter((m) => m.role === 'user')
-    .map((m) => asText(m.content))
+    .map((m) => m.content)
     .join('\n');
 
   if (systemText.includes('PromptVersion: sales-qualifier/')) {
@@ -128,6 +140,15 @@ export const extractJSON = (text: string): string => {
   return text.trim();
 };
 
+// ─── Param type (OpenAI-compatible) ──────────────────────────────────────────
+
+export interface LLMParams {
+  model: string;
+  max_tokens: number;
+  system: string;
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+}
+
 // ─── Retry runner ─────────────────────────────────────────────────────────────
 
 export interface ClaudeRunResult<T> {
@@ -137,7 +158,7 @@ export interface ClaudeRunResult<T> {
 }
 
 export async function runWithRetry<T>(
-  params: Anthropic.MessageCreateParamsNonStreaming,
+  params: LLMParams,
   schema: z.ZodType<T>,
   defaultError: string
 ): Promise<ClaudeRunResult<T>> {
@@ -156,10 +177,19 @@ export async function runWithRetry<T>(
     };
   }
 
-  const client = getAnthropicClient();
+  const client = getOpenAIClient();
   let tokensUsed = 0;
   let retryCount = 0;
   let lastError = defaultError;
+
+  // Build OpenAI messages array: system message + user messages
+  const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: 'system', content: params.system },
+    ...params.messages.map((m) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    })),
+  ];
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     if (attempt > 0) {
@@ -171,16 +201,23 @@ export async function runWithRetry<T>(
     }
 
     try {
-      const response = await client.messages.create(params);
-      tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
-      const raw = response.content[0];
+      const response = await client.chat.completions.create({
+        model: params.model,
+        max_tokens: params.max_tokens,
+        messages: openAiMessages,
+      });
 
-      if (raw.type !== 'text') {
-        lastError = 'Unexpected non-text response from model';
+      tokensUsed = (response.usage?.prompt_tokens ?? 0) + (response.usage?.completion_tokens ?? 0);
+      const rawText = response.choices[0]?.message?.content ?? '';
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(extractJSON(rawText));
+      } catch {
+        lastError = `JSON parse failed on attempt ${attempt + 1}: model returned non-JSON content: "${rawText.slice(0, 200)}"`;
         continue;
       }
 
-      const parsed = JSON.parse(extractJSON(raw.text)) as unknown;
       const validated = schema.safeParse(parsed);
 
       if (!validated.success) {

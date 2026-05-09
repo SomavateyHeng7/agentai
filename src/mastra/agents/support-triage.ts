@@ -9,7 +9,7 @@ const logger = createLogger({
 });
 
 export class SupportTriage extends BaseAgent {
-  async triage(input: unknown): Promise<ApiResponse<SupportTriageResult>> {
+  async triage(input: unknown, promptVersion?: string): Promise<ApiResponse<SupportTriageResult>> {
     return this.executeValidated({
       input,
       schema: SupportTicketSchema,
@@ -20,6 +20,7 @@ export class SupportTriage extends BaseAgent {
         ticketId: parsed.id,
         subject: parsed.subject,
       }),
+      promptVersion,
     });
   }
 }
